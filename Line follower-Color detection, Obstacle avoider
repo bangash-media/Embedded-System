@@ -1,0 +1,258 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 4);
+#define enA 5//Enable1 L298 Pin enA    //  start of ir
+#define in1 9 //Motor1  L298 Pin in1 
+#define in2 10 //Motor1  L298 Pin in2 
+#define in3 11 //Motor2  L298 Pin in3 
+#define in4 12 //Motor2  L298 Pin in4 
+#define enB 6 //Enable2 L298 Pin enB   //  end of ir
+#define trigPin 7                      //  start of uts           
+#define echoPin 8                      //  end of uts             
+#define outPin 33                       //  start of color  
+#define s0 39
+#define s1 41
+#define s2 35
+#define s3 37  
+#define ANALOG_IN_PIN A2                            //Start of voltage sensor
+// Floats for ADC voltage & Input voltage
+float adc_voltage = 0.0;
+float in_voltage = 0.0;
+// Floats for resistor values in divider (in ohms)
+float R1 = 30000.0;
+float R2 = 7500.0; 
+// Float for Reference Voltage
+float ref_voltage = 5.0;
+// Integer for ADC value
+int adc_value = 0;                          //end of voltage sensor
+#define ANALOG_IN_PIN A3                    //Start of Current sensor
+// Variables for Measured Voltage and Calculated Current
+double Vout = 0;
+double Current = 0;
+const double scale_factor = 0.185; // 5A
+const double vRef = 5.00;
+const double resConvert = 1024;
+double resADC = vRef/resConvert;
+double zeroPoint = vRef/2;                          //end of Current sensor
+
+int red, grn, blu;
+String color ="";
+long startTiming = 0;
+long elapsedTime =0;                    //  end of color
+
+int Set=3;      //for uts
+int distance_F; //for uts
+
+#define R_S A5 //ir sensor Right
+#define L_S A4 //ir sensor Left
+
+void setup(){ // put your setup code here, to run once
+
+Serial.begin (9600);
+pinMode(trigPin, OUTPUT);
+pinMode(echoPin, INPUT);
+
+pinMode(s0, OUTPUT);
+pinMode(s1, OUTPUT);
+pinMode(s2, OUTPUT);
+pinMode(s3, OUTPUT);
+pinMode(outPin, INPUT); //out from sensor becomes input to arduino
+// Setting frequency scaling to 100%
+digitalWrite(s0,HIGH);
+digitalWrite(s1,HIGH);
+startTiming = millis();
+lcd.begin();
+lcd.backlight();
+lcd.print("Welcome To");
+  lcd.setCursor (1,1);
+  lcd.print("Color Detector");
+  delay(2000);  
+  lcd.clear();  
+pinMode(R_S, INPUT); // declare if sensor as input  
+pinMode(L_S, INPUT); // declare ir sensor as input
+
+pinMode(enA, OUTPUT); // declare as output for L298 Pin enA 
+pinMode(in1, OUTPUT); // declare as output for L298 Pin in1 
+pinMode(in2, OUTPUT); // declare as output for L298 Pin in2 
+pinMode(in3, OUTPUT); // declare as output for L298 Pin in3   
+pinMode(in4, OUTPUT); // declare as output for L298 Pin in4 
+pinMode(enB, OUTPUT); // declare as output for L298 Pin enB 
+
+analogWrite(enA, 100); // Write The Duty Cycle 0 to 255 Enable Pin A for Motor1 Speed 
+analogWrite(enB, 100); // Write The Duty Cycle 0 to 255 Enable Pin B for Motor2 Speed 
+distance_F = Ultrasonic_read();
+
+delay(500);
+}
+void loop(){ 
+ 
+distance_F = Ultrasonic_read();
+getColor();
+
+
+ elapsedTime = millis()-startTiming; 
+  if (elapsedTime > 500) {
+     showDataLCD();
+       
+ 
+    startTiming = millis();
+  }
+if (elapsedTime > 1000) {
+      
+      getvoltage();
+ 
+    startTiming = millis();
+  }if (elapsedTime > 1500) {
+     
+getcurrent();
+    startTiming = millis();
+  }
+
+
+//Serial.print("D F=");Serial.println(distance_F);
+  
+
+
+if((digitalRead(R_S) == 0)&&(digitalRead(L_S) == 0))
+if(distance_F > Set){forword();}
+else{Stop();} 
+//{forword();}   //if Right Sensor and Left Sensor are at White color then it will call forword function
+
+if((digitalRead(R_S) == 0)&&(digitalRead(L_S) == 1))
+if(distance_F > Set){turnRight();}
+else{Stop();}
+//{turnRight();} //if Right Sensor is Black and Left Sensor is White then it will call turn Right function  
+
+if((digitalRead(R_S) == 1)&&(digitalRead(L_S) == 0))
+if(distance_F > Set){turnLeft();}
+else{Stop();}
+//{turnLeft();}  //if Right Sensor is White and Left Sensor is Black then it will call turn Left function
+
+if((digitalRead(R_S) == 1)&&(digitalRead(L_S) == 1)){Stop();} //if Right Sensor and Left Sensor are at Black color then it will call Stop function
+
+   
+}
+void getvoltage(){
+   // Read the Analog Input
+   adc_value = analogRead(ANALOG_IN_PIN);
+   
+   // Determine voltage at ADC input
+   adc_voltage  = (adc_value * ref_voltage) / 1024.0; 
+   
+   // Calculate voltage at divider input
+   in_voltage = adc_voltage / (R2/(R1+R2)); 
+    
+}
+void getcurrent(){
+   // Vout is read 1000 Times for precision
+  for(int i = 0; i < 1000; i++) {
+    Vout = (Vout + (resADC * analogRead(A0)));   
+    delay(1);
+  }
+  
+  // Get Vout in mv
+  Vout = Vout /1000;
+  
+  // Convert Vout into Current using Scale Factor
+  Current = (Vout - zeroPoint)/ scale_factor;   
+}
+
+
+//*******Ultrasonic_read*********
+long Ultrasonic_read(){
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  long time = pulseIn (echoPin, HIGH);
+  return time / 29 / 2;
+}
+void forword(){  //forword
+digitalWrite(in1, HIGH); //Right Motor forword Pin 
+digitalWrite(in2, LOW);  //Right Motor backword Pin 
+digitalWrite(in3, LOW);  //Left Motor backword Pin 
+digitalWrite(in4, HIGH); //Left Motor forword Pin 
+}
+
+void turnRight(){ //turnRight
+digitalWrite(in1, LOW);  //Right Motor forword Pin 
+digitalWrite(in2, HIGH); //Right Motor backword Pin  
+digitalWrite(in3, LOW);  //Left Motor backword Pin 
+digitalWrite(in4, HIGH); //Left Motor forword Pin 
+}
+
+void turnLeft(){ //turnLeft
+digitalWrite(in1, HIGH); //Right Motor forword Pin 
+digitalWrite(in2, LOW);  //Right Motor backword Pin 
+digitalWrite(in3, HIGH); //Left Motor backword Pin 
+digitalWrite(in4, LOW);  //Left Motor forword Pin 
+}
+
+void Stop(){ //stop
+digitalWrite(in1, LOW); //Right Motor forword Pin 
+digitalWrite(in2, LOW); //Right Motor backword Pin 
+digitalWrite(in3, LOW); //Left Motor backword Pin 
+digitalWrite(in4, LOW); //Left Motor forword Pin 
+}
+
+void showDataLCD(void){
+lcd.clear();
+lcd.setCursor(0, 0);
+lcd.print("D=");
+lcd.print(distance_F);
+lcd.setCursor(0, 1);
+lcd.print("Clr");  
+if (color=="RED")
+turnback();
+lcd.print(color); 
+lcd.setCursor(8, 0);
+lcd.print("V=");
+lcd.print(in_voltage); 
+lcd.print("V=");
+lcd.setCursor(8, 1);
+lcd.print("C(A)=");
+lcd.print(Current);
+}
+
+void readRGB(){
+  red = 0, grn=0, blu=0;
+  
+  int n = 10;
+  for (int i = 0; i < n; ++i){
+    //read red component
+    digitalWrite(s2, LOW);
+    digitalWrite(s3, LOW);
+    red = red + pulseIn(outPin, LOW);
+  
+   //read green component
+    digitalWrite(s2, HIGH);
+    digitalWrite(s3, HIGH);
+    grn = grn + pulseIn(outPin, LOW);
+    
+   //let's read blue component
+    digitalWrite(s2, LOW);
+    digitalWrite(s3, HIGH);
+    blu = blu + pulseIn(outPin, LOW);
+  }
+  red = red/n;
+  grn = grn/n;
+  blu = blu/n;
+}
+
+void getColor(){  
+  readRGB();
+     if(red>8  && red<24  && grn>32 && grn<56 && blu>23 && blu<42) color = "RED";
+else if(red>17 && red<21  && grn>11 && grn<15 && blu>12 && blu<18) color = "GREEN";
+else if(red>22 && red<28  && grn>11 && grn<16 && blu>6  && blu<10) color = "BLUE";
+else if(red>4  && red<8   && grn>6  && grn<10 && blu>9  && blu<13) color = "YELLOW";
+else if(red>5  && red<8   && grn>4  && grn<8  && blu>3  && blu<7)  color = "WHITE";
+else if(red>28 && red<36  && grn>25 && grn<34 && blu>20 && blu<29) color = "BLACK";
+else  color = "-";
+}
+void turnback(){
+  digitalWrite(in1, HIGH); //Right Motor forword Pin 
+digitalWrite(in2, LOW);  //Right Motor backword Pin 
+digitalWrite(in3, HIGH); //Left Motor backword Pin 
+digitalWrite(in4, LOW);  //Left Motor forword Pin 
+delay(1000);
+}
