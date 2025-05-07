@@ -1,0 +1,15 @@
+
+
+.org 0x0000
+main:
+ ldi r16, 18 ; Load the value 18 into r16 (Age threshold)
+ ldi r20, 15 ; Load a test user's age into r20 (Assumed user's age)
+ cp r20, r16 ; Compare r20 (user's age) with r16 (age threshold) brge above_or_equal_to_18 ; Branch if r20 is greater than or equal to 18
+ ; Age is below 18
+ ldi r20, 2 ; Store 2 in r20
+ rjmp infinite_loop ; Jump to the infinite loop
+above_or_equal_to_18:
+ ; Age is greater than or equal to 18
+ ldi r20, 1 ; Store 1 in r20
+infinite_loop:
+ rjmp infinite_loop ; Enter an infinite loop
