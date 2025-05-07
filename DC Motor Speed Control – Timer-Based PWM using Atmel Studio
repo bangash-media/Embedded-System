@@ -1,0 +1,40 @@
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+int main(void)
+{
+DDRC=0x00;
+DDRB=0x80;
+unsigned char duty;
+//set fast PWM mode with non-inverted output
+TCCR0A|=(1<<WGM00)|(1<<WGM01)|(1<<COM0A1);
+TCCR0B |=(1<<CS00);
+while (1)
+{
+if(PINC==0x00)
+{
+duty=0;
+OCR0A=duty; //0%
+}
+if(PINC==0x01)
+{
+duty=51;
+OCR0A=duty; //20%
+}
+if(PINC==0x02)
+{
+duty=102;
+OCR0A=duty; //40%
+}
+if(PINC==0x04)
+{
+duty=153;
+OCR0A=duty; //60%
+}
+if(PINC==0x08)
+{
+duty=255;
+OCR0A=duty; //100%
+}
+}
+}
