@@ -1,0 +1,41 @@
+Transmitter Code:
+DDRD = 0xFF;
+DDRC = 0xFF;
+Lcd8_Init();
+UCSR0B = (1<<TXEN0); //Enable Transmit
+UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); //8 bit data
+UBRR0 = 255; //Set UBRR to get specified Baud Rate
+unsigned char count=0;
+unsigned char temp[10];
+while (1)
+{
+itoa(count,temp,10);
+Lcd8_Set_Cursor(1,0);
+Lcd8_Write_String("Transmitter:");
+Lcd8_Set_Cursor(2,0);
+Lcd8_Write_String(temp);
+count++;
+while(!(UCSR0A&(1<<UDRE0))); //wait until UDR0 is empty
+UDR0 = count; //transmit the number
+}
+
+
+Receiver Code
+DDRC = 0xFF;
+DDRD = 0xFF;
+Lcd8_Init();
+UCSR0B = (1<<RXEN0); //Enable Receive
+UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); //8 bit data
+UBRR0 = 255; //Set UBRR to get specified Baud Rate
+unsigned char C;
+unsigned char count[10];
+while (1)
+{
+while(!(UCSR0A & (1<<RXC0))); //wait for new data
+C = UDR0;
+itoa(C,count,10);
+Lcd8_Set_Cursor(1,0);
+Lcd8_Write_String("Receiver:");
+Lcd8_Set_Cursor(2,0);
+Lcd8_Write_String(count); // Display data on LCD
+}
