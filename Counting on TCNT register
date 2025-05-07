@@ -1,0 +1,71 @@
+///////To display the counting on TCNT register on LCD and also counting how many
+times the TCNT counter is overflowing and showing it on LCD.///////
+
+// Define the clock speed if not already defined
+#ifndef F_CPU
+#define F_CPU 16000000UL // 16 MHz clock speed
+#endif
+// Define LCD pin mappings
+#define D0 eS_PORTD0
+#define D1 eS_PORTD1
+#define D2 eS_PORTD2
+#define D3 eS_PORTD3
+#define D4 eS_PORTC0
+#define D5 eS_PORTC1
+#define D6 eS_PORTC2
+#define D7 eS_PORTC3
+#define RS eS_PORTC6
+#define EN eS_PORTC7
+#include <avr/io.h>
+#include <util/delay.h>
+#include "lcd.h" // LCD library
+// Global variables
+int ToV; // Variable to store overflow count
+int TCNT; // Variable to store Timer/Counter value
+int Overflow=0; // Variable to store overflow occurrences
+// Function to implement timer functionality
+void timer()
+{
+int Value=0;
+TCNT0 = 0x00; // Initialize Timer/Counter value
+TCCR0A= 0x00; // Normal Mode Selected
+TCCR0B = 0x05; // 1024 prescaler
+while ((TIFR0&(1<<TOV0))==0)
+{
+Value=TCNT0; // Read Timer/Counter value
+}; // Wait for Timer0 to overflow
+TCCR0B = 0x00; // Stop the timer
+TIFR0 = 1<<TOV0; // Clear the overflow flag
+Overflow++; // Increment overflow count
+TCNT=Value; // Store Timer/Counter value
+ToV=Overflow; // Store overflow count
+}
+// Main function
+int main()
+{
+// for LCD Outputs
+DDRC=0xFF;
+DDRD=0xFF;
+// Initialize the LCD
+Lcd8_Init();
+char tov[10]; // Character array to store overflow count as a string
+char Tcnt[10]; // Character array to store Timer/Counter value as a string
+while(1)
+{
+// Display overflow count on the first line of the LCD
+Lcd8_Set_Cursor(1,1);
+Lcd8_Write_String("Overflow= ");
+Lcd8_Set_Cursor(1,10);
+itoa(ToV,tov,10); // Convert overflow count to a string as int is not
+accepted by LCD
+Lcd8_Write_String(tov); // Display overflow count on the LCD
+// Display Timer/Counter value on the second line of the LCD
+Lcd8_Set_Cursor(2,1);
+Lcd8_Write_String("TCNT= ");
+Lcd8_Set_Cursor(2,6);
+itoa(TCNT,Tcnt,16); // Convert Timer/Counter value to a hexadecimal string
+Lcd8_Write_String(Tcnt); // Display Timer/Counter value on the LCD
+timer(); // Call the timer function
+Lcd8_Clear(); // Clear the LCD for the next iteration
+}
+}
