@@ -1,4 +1,6 @@
-
+Assume a user have entered their age in a program. The value is stored in register r16.
+Write a program such that if the age is above 18, you store the value 1 in register r20, otherwise you
+store the value 2 in r20. After the check, you shall just enter an infinite loop.:
 
 .org 0x0000
 main:
