@@ -1,0 +1,45 @@
+#ifndef F_CPU
+#define F_CPU 16000000UL
+#endif
+#define D0 eS_PORTC0
+#define D1 eS_PORTC1
+#define D2 eS_PORTC2
+#define D3 eS_PORTC3
+#define D4 eS_PORTC4
+#define D5 eS_PORTC5
+#define D6 eS_PORTC6
+#define D7 eS_PORTC7
+#define RS eS_PORTD0
+#define EN eS_PORTD1
+#include <avr/io.h>
+#include <util/delay.h>
+#include "lcd.h"
+int main(void){
+DDRA=0xff;
+DDRB=0x00;
+DDRC=0xff;
+DDRD=0xff;
+Lcd8_Init();
+while(1){
+Lcd8_Clear();
+if (PINB &(1<<PINB0))
+{
+PORTA=0x01;
+Lcd8_Write_Char('1') ;
+}
+if (PINB &(1<<PINB1))
+{
+PORTA=0x02;
+Lcd8_Write_Char('2') ;
+}
+ if (PINB &(1<<PINB2))
+ {
+ PORTA=0x04;
+ Lcd8_Write_Char('3') ;
+ }
+ if (PINB &(1<<PINB3))
+ {
+ PORTA=0x08;
+ Lcd8_Write_Char('4') ;
+ }
+}}
