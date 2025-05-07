@@ -1,0 +1,55 @@
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+int main (void)
+{
+DDRC = 0xF0;
+DDRL = 0xFF;
+while (1)
+{
+PORTC = 0x10;
+if (PINC &(1<<PINC0))
+{
+PORTL = 0x06;
+}
+else if (PINC &(1<<PINC1))
+{
+PORTL = 0x5B;
+}
+else if (PINC &(1<<PINC2))
+{
+PORTL = 0x4F;
+}
+PORTC = 0x20;
+if ((PINC &(1<<PINC0)))
+{
+PORTL = 0x66;
+}
+else if (PINC &(1<<PINC1))
+{
+PORTL = 0x6D;
+}
+else if (PINC &(1<<PINC2))
+{
+PORTL = 0x7D;
+}
+PORTA = 0x40;
+if ((PINC &(1<<PINC0)))
+{
+PORTL = 0x07;
+}
+else if (PINC &(1<<PINC1))
+{
+PORTL = 0x7F;
+}
+else if (PINC &(1<<PINC2))
+{
+PORTL = 0x6F;
+}
+PORTC = 0x80;
+if (PINC &(1<<PINC1))
+{
+PORTL = 0x3F;
+}
+}
+}
