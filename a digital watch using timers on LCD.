@@ -1,0 +1,80 @@
+// Define the clock speed if not already defined
+#ifndef F_CPU
+#define F_CPU 16000000UL // 16 MHz clock speed
+#endif
+// Define LCD pin mappings
+#define D0 eS_PORTD0
+#define D1 eS_PORTD1
+#define D2 eS_PORTD2
+#define D3 eS_PORTD3
+#define D4 eS_PORTC0
+#define D5 eS_PORTC1
+#define D6 eS_PORTC2
+#define D7 eS_PORTC3
+#define RS eS_PORTC6
+#define EN eS_PORTC7
+#include <avr/io.h>
+#include <util/delay.h>
+#include "lcd.h"
+// Function to introduce a delay of 1 second using Timer1
+void delay1s() {
+TCNT1H = 0; // Initialize Timer/Counter1 High byte
+TCNT1L = 0; // Initialize Timer/Counter1 Low byte
+OCR1A = 15625; // Set the compare match value for 1-second delay
+TCCR1A = 0; // Normal mode
+TCCR1B = 0x05; // with 1024 prescaler
+while ((TIFR1 & (1 << OCF1A)) == 0)
+{ } // Wait until OCF1A is set
+TCCR1A = 0; // Clear Timer/Counter1 Control Register A
+TCCR1B = 0; // Stop Timer1
+TIFR1 = 1 << OCF1A; // Clear the compare match flag
+}
+// Main function
+int main() {
+// Set data direction registers for Port C and Port D
+DDRC = 0xFF;
+DDRD = 0xFF;
+// Integer declaration for timekeeping
+int seconds = 0;
+int minutes = 0;
+int hours = 0;
+// Character array declaration for displaying time on LCD
+char S[10];
+char M[10];
+char H[10];
+// Initialize the LCD
+Lcd8_Init();
+while (1) {
+Lcd8_Write_String("Time: ");
+// Hour Loop
+for (hours = 0; hours < 24; hours++) {
+Lcd8_Set_Cursor(1, 6);
+itoa(hours, H, 10); // Integer to string
+Lcd8_Write_String(H);
+Lcd8_Set_Cursor(1, 9);
+Lcd8_Write_Char(':');
+// Minutes Loop
+for (minutes = 0; minutes < 60; minutes++) {
+Lcd8_Set_Cursor(1, 10);
+itoa(minutes, M, 10); // Integer to string
+Lcd8_Write_String(M);
+Lcd8_Set_Cursor(1, 12);
+Lcd8_Write_Char(':');
+// Seconds Loop
+for (seconds = 0; seconds < 60; seconds++) {
+Lcd8_Set_Cursor(1, 14);
+itoa(seconds, S, 10); // Integer to string
+Lcd8_Write_String(S);
+delay1s();
+}
+Lcd8_Clear();
+Lcd8_Write_String("Time: ");
+Lcd8_Set_Cursor(1, 6);
+Lcd8_Write_String(H);
+}
+Lcd8_Clear();
+Lcd8_Write_String("Time: ");
+}
+}
+return 0;
+}
